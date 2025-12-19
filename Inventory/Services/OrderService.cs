@@ -67,5 +67,21 @@ namespace Inventory.Api.Services
                 .Include(o => o.Items)
                 .FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == userId);
         }
+
+        public static OrderResponse MapToResponse(Order order)
+        {
+            return new OrderResponse
+            {
+                Id = order.Id,
+                CreatedAt = order.CreatedAt,
+                Items = order.Items.Select(i => new OrderItemResponse
+                {
+                    ProductId = i.ProductId,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice
+                }).ToList(),
+                TotalAmount = order.Items.Sum(i => i.UnitPrice * i.Quantity)
+            };
+        }
     }
 }

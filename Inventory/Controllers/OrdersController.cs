@@ -1,5 +1,6 @@
 ﻿using Inventory.Api.Domain.Entities;
 using Inventory.Api.DTOs.Orders;
+using Inventory.Api.Services;
 using Inventory.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,7 +25,7 @@ namespace Inventory.Api.Controllers
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var orders = await _orderService.GetAllAsync(userId);
-            return Ok(orders);
+            return Ok(orders.Select(OrderService.MapToResponse));
         }
 
         // GET api/orders/my/{id}
@@ -34,7 +35,7 @@ namespace Inventory.Api.Controllers
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var order = await _orderService.GetByIdAsync(userId, id);
             if (order == null) return NotFound();
-            return Ok(order);
+            return Ok(OrderService.MapToResponse(order));
         }
 
         // POST api/orders
@@ -44,7 +45,7 @@ namespace Inventory.Api.Controllers
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
             var order = await _orderService.CreateAsync(userId, request);
-            return Ok(order);
+            return Ok(OrderService.MapToResponse(order));
         }
     }
 }
