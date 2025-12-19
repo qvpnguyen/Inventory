@@ -1,4 +1,5 @@
 ﻿using Inventory.Api.Domain.Entities;
+using Inventory.Api.DTOs.Orders;
 using Inventory.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,56 +23,28 @@ namespace Inventory.Api.Controllers
         public async Task<IActionResult> GetMyOrders()
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var orders = await _orderService.GetOrdersByUserAsync(userId);
+            var orders = await _orderService.GetAllAsync(userId);
             return Ok(orders);
         }
 
         // GET api/orders/my/{id}
         [HttpGet("my/{id}")]
-        public async Task<IActionResult> GetMyOrder(Guid id)
+        public async Task<IActionResult> GetOrderById(Guid id)
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var order = await _orderService.GetByIdAsync(id, userId);
+            var order = await _orderService.GetByIdAsync(userId, id);
             if (order == null) return NotFound();
             return Ok(order);
         }
 
         // POST api/orders
         [HttpPost]
-        public async Task<IActionResult> CreateOrder([FromBody] Order order)
+        public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            order.UserId = userId;
 
-            var createdOrder = await _orderService.CreateAsync(order);
-            return CreatedAtAction(nameof(GetMyOrder), new { id = createdOrder.Id }, createdOrder);
-        }
-
-        // PUT api/orders/{id}
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateOrder(Guid id, [FromBody] Order updatedOrder)
-        {
-            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var order = await _orderService.GetByIdAsync(id, userId);
-            if (order == null) return NotFound();
-            
-            // Update order properties
-            order.Items = updatedOrder.Items;
-
-            await _orderService.UpdateAsync(order);
-            return NoContent();
-        }
-
-        // DELETE api/orders/{id}
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteOrder(Guid id)
-        {
-            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var order = await _orderService.GetByIdAsync(id, userId);
-            if (order == null) return NotFound();
-
-            await _orderService.DeleteAsync(order);
-            return NoContent();
+            var order = await _orderService.CreateAsync(userId, request);
+            return Ok(order);
         }
     }
 }

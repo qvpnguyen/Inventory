@@ -1,4 +1,5 @@
 ﻿using Inventory.Api.Domain.Entities;
+using Inventory.Api.DTOs.Products;
 using Inventory.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,40 +22,31 @@ namespace Inventory.Api.Controllers
         [HttpGet("my")]
         public async Task<IActionResult> GetMyProducts()
         {
-            // Get UserId from JWT
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
             var products = await _productService.GetProductsByUserAsync(userId);
+
             return Ok(products);
         }
 
         // POST api/products
         [HttpPost]
-        public async Task<IActionResult> CreateProduct([FromBody] Product product)
+        public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest request)
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-            // Associate the product to the connected user
-            product.UserId = userId;
+            var product = await _productService.CreateAsync(userId, request);
 
-            var createdProduct = await _productService.CreateAsync(product);
-            return CreatedAtAction(nameof(GetMyProducts), new { id = createdProduct.Id }, createdProduct);
+            return Ok(product);
         }
 
         // PUT api/products/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateProduct(Guid id, [FromBody] Product updatedProduct)
+        public async Task<IActionResult> UpdateProduct(Guid id, [FromBody] UpdateProductRequest request)
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-            var product = await _productService.GetByIdAsync(id);
-
-            if (product == null || product.UserId != userId)
-                return NotFound();
-
-            product.Name = updatedProduct.Name;
-            product.StockQuantity = updatedProduct.StockQuantity;
-
-            await _productService.UpdateAsync(product);
+            await _productService.UpdateAsync(userId, id, request);
 
             return NoContent();
         }
@@ -65,12 +57,7 @@ namespace Inventory.Api.Controllers
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-            var product = await _productService.GetByIdAsync(id);
-
-            if (product == null || product.UserId != userId)
-                return NotFound();
-
-            await _productService.DeleteAsync(product);
+            await _productService.DeleteAsync(userId, id);
 
             return NoContent();
         }
