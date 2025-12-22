@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.13.35919.96 d17.13
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inventory.Api", "Inventory\Inventory.Api.csproj", "{63FAB930-55D6-4BF9-9BE8-A8F70641AFF7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inventory.Api", "Inventory.Api\Inventory.Api.csproj", "{63FAB930-55D6-4BF9-9BE8-A8F70641AFF7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inventory.Tests", "Inventory.Tests\Inventory.Tests.csproj", "{F36749AF-9681-4D2E-A248-C2A2BA7DCD23}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{63FAB930-55D6-4BF9-9BE8-A8F70641AFF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{63FAB930-55D6-4BF9-9BE8-A8F70641AFF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{63FAB930-55D6-4BF9-9BE8-A8F70641AFF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F36749AF-9681-4D2E-A248-C2A2BA7DCD23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F36749AF-9681-4D2E-A248-C2A2BA7DCD23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F36749AF-9681-4D2E-A248-C2A2BA7DCD23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F36749AF-9681-4D2E-A248-C2A2BA7DCD23}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
