@@ -1,7 +1,9 @@
 ﻿using Inventory.Api.Domain.Entities;
 using Inventory.Api.DTOs.Orders;
+using Inventory.Api.Hubs;
 using Inventory.Api.Persistence;
 using Inventory.Api.Services.Interfaces;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Inventory.Api.Services
@@ -9,10 +11,12 @@ namespace Inventory.Api.Services
     public class OrderService : IOrderService
     {
         private readonly AppDbContext _context;
+        private readonly IHubContext<OrderHub> _hubContext;
 
-        public OrderService(AppDbContext context)
+        public OrderService(AppDbContext context, IHubContext<OrderHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         public async Task<Order> CreateAsync(Guid userId, CreateOrderRequest request)
@@ -57,6 +61,11 @@ namespace Inventory.Api.Services
                 await _context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
+
+                // SignalR notification
+                var orderDto = MapToResponse(order);
+                await _hubContext.Clients.All.SendAsync("OrderCreated", orderDto);
+
                 return order;
             } catch
             {
@@ -85,6 +94,7 @@ namespace Inventory.Api.Services
             return new OrderResponse
             {
                 Id = order.Id,
+                UserId = order.UserId,
                 CreatedAt = order.CreatedAt,
                 TotalAmount = order.TotalAmount,
                 Items = order.Items.Select(i => new OrderItemResponse

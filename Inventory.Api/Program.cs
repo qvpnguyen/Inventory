@@ -6,6 +6,7 @@ using System.Text;
 using Inventory.Api.Services;
 using Inventory.Api.Services.Interfaces;
 using Microsoft.OpenApi.Models;
+using Inventory.Api.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -78,7 +79,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
-
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -96,5 +97,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<OrderHub>("/hubs/orders");
 
 app.Run();
