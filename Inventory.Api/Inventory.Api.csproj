@@ -26,7 +26,6 @@
 
   <ItemGroup>
     <Folder Include="Domain\Enums\" />
-    <Folder Include="Middleware\" />
   </ItemGroup>
 
 </Project>

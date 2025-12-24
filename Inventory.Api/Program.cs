@@ -7,6 +7,7 @@ using Inventory.Api.Services;
 using Inventory.Api.Services.Interfaces;
 using Microsoft.OpenApi.Models;
 using Inventory.Api.Hubs;
+using Inventory.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -96,7 +97,10 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 app.MapControllers();
+
 app.MapHub<OrderHub>("/hubs/orders");
 
 app.Run();
