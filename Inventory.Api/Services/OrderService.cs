@@ -5,6 +5,7 @@ using Inventory.Api.Persistence;
 using Inventory.Api.Services.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Inventory.Api.Exceptions;
 
 namespace Inventory.Api.Services
 {
@@ -37,12 +38,12 @@ namespace Inventory.Api.Services
 
                     if (product is null)
                     {
-                        throw new KeyNotFoundException("Product not found");
+                        throw new NotFoundException($"Product with id {item.ProductId} not found");
                     }
 
                     if (product.StockQuantity < item.Quantity)
                     {
-                        throw new InvalidOperationException("Insufficient stock");
+                        throw new BusinessRuleException($"Insufficient stock for product {product.Name}");
                     }
 
                     product.StockQuantity -= item.Quantity;

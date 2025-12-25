@@ -1,5 +1,6 @@
 ﻿using Inventory.Api.Domain.Entities;
 using Inventory.Api.DTOs.Orders;
+using Inventory.Api.Exceptions;
 using Inventory.Api.Services;
 using Inventory.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -43,9 +44,13 @@ namespace Inventory.Api.Controllers
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-
             var order = await _orderService.CreateAsync(userId, request);
-            return Ok(OrderService.MapToResponse(order));
+            var response = OrderService.MapToResponse(order);
+
+            return CreatedAtAction(
+                nameof(GetOrderById),
+                new { id = response.Id },
+                response);
         }
     }
 }

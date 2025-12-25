@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using Inventory.Api.Exceptions;
+using System.Net;
 using System.Text.Json;
 
 namespace Inventory.Api.Middleware
@@ -31,8 +32,8 @@ namespace Inventory.Api.Middleware
         {
             var statusCode = exception switch
             {
-                KeyNotFoundException => HttpStatusCode.NotFound,
-                InvalidOperationException => HttpStatusCode.BadRequest,
+                NotFoundException => HttpStatusCode.NotFound,
+                BusinessRuleException => HttpStatusCode.BadRequest,
                 UnauthorizedAccessException => HttpStatusCode.Unauthorized,
                 _ => HttpStatusCode.InternalServerError
             };

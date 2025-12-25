@@ -3,6 +3,7 @@ using Inventory.Api.Domain.Entities;
 using Inventory.Api.DTOs.Orders;
 using Inventory.Api.Hubs;
 using Inventory.Api.Services;
+using Inventory.Api.Exceptions;
 using Inventory.Tests.Helpers;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration.UserSecrets;
@@ -71,7 +72,7 @@ namespace Inventory.Tests.Services
             };
 
             // Act & Assert
-            await Assert.ThrowsAsync<KeyNotFoundException>(() => 
+            await Assert.ThrowsAsync<NotFoundException>(() => 
                 service.CreateAsync(user.Id, request));
         }
 
@@ -100,12 +101,12 @@ namespace Inventory.Tests.Services
             {
                 Items = new List<CreateOrderItemRequest>
                 {
-                    new() { ProductId = product.Id, Quantity = 2 }
+                    new() { ProductId = product.Id, Quantity = 100 }
                 }
             };
 
             // Act & Assert
-            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            await Assert.ThrowsAsync<BusinessRuleException>(() =>
                 service.CreateAsync(user.Id, request));
 
             // Stock shouldn't have changed
@@ -151,7 +152,7 @@ namespace Inventory.Tests.Services
             };
 
             // Act
-            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            await Assert.ThrowsAsync<BusinessRuleException>(() =>
                 service.CreateAsync(user.Id, request));
 
             // Refresh entities of current context
@@ -161,6 +162,49 @@ namespace Inventory.Tests.Services
             // Assert : Product1 stock has not been changed
             (await context.Products.FindAsync(product1.Id))!.StockQuantity.Should().Be(5);
             (await context.Products.FindAsync(product2.Id))!.StockQuantity.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task CreateOrder_WhenOneItemDoesntExist_ShouldRollbackAll()
+        {
+            // Arrange
+            var context = DbContextFactory.CreateDbContext();
+            var service = new OrderService(context, CreateMockHub());
+
+            var user = DbContextFactory.CreateTestUser(context);
+
+            var product1 = new Product
+            {
+                Id = Guid.NewGuid(),
+                Name = "Product 1",
+                StockQuantity = 5,
+                Price = 20m,
+                UserId = user.Id
+            };
+            var product2Id = Guid.NewGuid();
+
+            context.Products.AddRange(product1);
+            await context.SaveChangesAsync();
+
+            var request = new CreateOrderRequest
+            {
+                Items = new List<CreateOrderItemRequest>
+                {
+                    new() { ProductId = product1.Id, Quantity = 2 },
+                    new() { ProductId = product2Id, Quantity = 1 }
+                }
+            };
+
+            // Act
+            await Assert.ThrowsAsync<NotFoundException>(() =>
+                service.CreateAsync(user.Id, request));
+
+            // Refresh entities of current context
+            await context.Entry(product1).ReloadAsync();
+
+            // Assert : Product1 stock has not been changed
+            (await context.Products.FindAsync(product1.Id))!.StockQuantity.Should().Be(5);
+            (await context.Products.FindAsync(product2Id)).Should().BeNull();
         }
 
     }
