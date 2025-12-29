@@ -34,7 +34,7 @@ namespace Inventory.Api.Middleware
             {
                 NotFoundException => HttpStatusCode.NotFound,
                 BusinessRuleException => HttpStatusCode.BadRequest,
-                UnauthorizedAccessException => HttpStatusCode.Unauthorized,
+                ForbiddenException => HttpStatusCode.Unauthorized,
                 _ => HttpStatusCode.InternalServerError
             };
 

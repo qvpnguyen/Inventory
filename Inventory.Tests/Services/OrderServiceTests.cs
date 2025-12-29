@@ -49,10 +49,6 @@ namespace Inventory.Tests.Services
             // Assert
             var updatedProduct = await context.Products.FindAsync(product.Id);
             Assert.Equal(3, updatedProduct!.StockQuantity);
-            //order.Items.Count.Should().Be(1);
-            //order.Items.ElementAt(0).UnitPrice.Should().Be(49.99m);
-            //order.TotalAmount.Should().Be(99.98m);
-            //(await context.Products.FindAsync(product.Id))!.StockQuantity.Should().Be(8);
         }
 
         [Fact]
@@ -205,6 +201,105 @@ namespace Inventory.Tests.Services
             // Assert : Product1 stock has not been changed
             (await context.Products.FindAsync(product1.Id))!.StockQuantity.Should().Be(5);
             (await context.Products.FindAsync(product2Id)).Should().BeNull();
+        }
+
+        [Fact]
+        public async Task GetOrder_ByOwner_ShouldSucceed()
+        {
+            // Arrange
+            var context = DbContextFactory.CreateDbContext();
+            var service = new OrderService(context, CreateMockHub());
+
+            var owner = DbContextFactory.CreateTestUser(context);
+
+            var product = new Product
+            {
+                Id = Guid.NewGuid(),
+                Name = "Product 1",
+                StockQuantity = 5,
+                Price = 20m,
+                UserId = owner.Id
+            };
+
+            context.Products.Add(product);
+            await context.SaveChangesAsync();
+
+            var order = new Order
+            {
+                Id = Guid.NewGuid(),
+                UserId = owner.Id,
+                CreatedAt = DateTime.UtcNow,
+                TotalAmount = 40m,
+                Items = new List<OrderItem>
+                {
+                    new OrderItem
+                    {
+                        ProductId = product.Id,
+                        Quantity = 2,
+                        UnitPrice = product.Price
+                    }
+                }
+            };
+
+            context.Orders.Add(order);
+            await context.SaveChangesAsync();
+
+            // Act
+            var result = await service.GetByIdAsync(owner.Id, order.Id);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Id.Should().Be(order.Id);
+            result.UserId.Should().Be(owner.Id);
+            result.Items.Should().HaveCount(1);
+            result.Items.ElementAt(0).ProductId.Should().Be(product.Id);
+            result.Items.ElementAt(0).Quantity.Should().Be(2);
+            result.Items.ElementAt(0).UnitPrice.Should().Be(product.Price);
+        }
+
+        [Fact]
+        public async Task GetOrder_ByIntruder_ShouldThrowForbiddenException()
+        {
+            // Arrange
+            var context = DbContextFactory.CreateDbContext();
+            var service = new OrderService(context, CreateMockHub());
+
+            var owner = DbContextFactory.CreateTestUser(context);
+            var intruder = DbContextFactory.CreateTestUser(context);
+
+            var product = new Product
+            {
+                Id = Guid.NewGuid(),
+                Name = "Product 1",
+                StockQuantity = 5,
+                Price = 20m,
+                UserId = owner.Id
+            };
+            context.Products.Add(product);
+            await context.SaveChangesAsync();
+
+            var order = new Order
+            {
+                Id = Guid.NewGuid(),
+                UserId = owner.Id,
+                CreatedAt = DateTime.UtcNow,
+                TotalAmount = 40m,
+                Items = new List<OrderItem>
+        {
+            new OrderItem
+            {
+                ProductId = product.Id,
+                Quantity = 2,
+                UnitPrice = product.Price
+            }
+        }
+            };
+            context.Orders.Add(order);
+            await context.SaveChangesAsync();
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ForbiddenException>(() =>
+                service.GetByIdAsync(intruder.Id, order.Id));
         }
 
     }

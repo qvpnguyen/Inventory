@@ -35,7 +35,6 @@ namespace Inventory.Api.Controllers
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var order = await _orderService.GetByIdAsync(userId, id);
-            if (order == null) return NotFound();
             return Ok(OrderService.MapToResponse(order));
         }
 

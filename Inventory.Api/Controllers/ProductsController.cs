@@ -1,5 +1,6 @@
 ﻿using Inventory.Api.Domain.Entities;
 using Inventory.Api.DTOs.Products;
+using Inventory.Api.Services;
 using Inventory.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,7 +27,7 @@ namespace Inventory.Api.Controllers
 
             var products = await _productService.GetProductsByUserAsync(userId);
 
-            return Ok(products);
+            return Ok(products.Select(ProductService.MapToResponse));
         }
 
         // POST api/products
@@ -37,7 +38,7 @@ namespace Inventory.Api.Controllers
 
             var product = await _productService.CreateAsync(userId, request);
 
-            return Ok(product);
+            return Ok(ProductService.MapToResponse(product));
         }
 
         // PUT api/products/{id}

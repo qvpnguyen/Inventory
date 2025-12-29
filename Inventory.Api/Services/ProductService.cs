@@ -79,5 +79,16 @@ namespace Inventory.Api.Services
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
         }
+
+        public static ProductResponse MapToResponse(Product product)
+        {
+            return new ProductResponse
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Price = product.Price,
+                StockQuantity = product.StockQuantity,
+            };
+        }
     }
 }

@@ -85,9 +85,19 @@ namespace Inventory.Api.Services
 
         public async Task<Order?> GetByIdAsync(Guid userId, Guid orderId)
         {
-            return await _context.Orders
+            var order = await _context.Orders
                 .Include(o => o.Items)
-                .FirstOrDefaultAsync(o => o.Id == orderId && o.UserId == userId);
+                .FirstOrDefaultAsync(o => o.Id == orderId);
+
+            if (order == null)
+            {
+                throw new NotFoundException("Order not found");
+            }
+            if (order.UserId != userId)
+            {
+                throw new ForbiddenException("Access denied");
+            }
+            return order;
         }
 
         public static OrderResponse MapToResponse(Order order)
