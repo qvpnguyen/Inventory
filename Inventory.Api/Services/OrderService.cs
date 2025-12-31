@@ -13,7 +13,14 @@ namespace Inventory.Api.Services
     {
         private readonly AppDbContext _context;
         private readonly IHubContext<OrderHub> _hubContext;
+        private readonly ILogger<OrderService> _logger;
 
+        public OrderService(AppDbContext context, IHubContext<OrderHub> hubContext, ILogger<OrderService> logger)
+        {
+            _context = context;
+            _hubContext = hubContext;
+            _logger = logger;
+        }
         public OrderService(AppDbContext context, IHubContext<OrderHub> hubContext)
         {
             _context = context;
@@ -43,6 +50,8 @@ namespace Inventory.Api.Services
 
                     if (product.StockQuantity < item.Quantity)
                     {
+                        _logger.LogWarning(
+                            $"Insufficient stock for product {product.Id}. Requested {item.Quantity}. Available {product.StockQuantity}");
                         throw new BusinessRuleException($"Insufficient stock for product {product.Name}");
                     }
 
@@ -67,6 +76,9 @@ namespace Inventory.Api.Services
                 var orderDto = MapToResponse(order);
                 await _hubContext.Clients.All.SendAsync("OrderCreated", orderDto);
 
+                _logger.LogInformation(
+                    $"Order {order.Id} created for user {userId} with total {order.TotalAmount}");
+
                 return order;
             } catch
             {
@@ -78,6 +90,7 @@ namespace Inventory.Api.Services
         public async Task<IEnumerable<Order>> GetAllAsync(Guid userId)
         {
             return await _context.Orders
+                .AsNoTracking()
                 .Include(o => o.Items)
                 .Where(o => o.UserId == userId)
                 .ToListAsync();
@@ -86,6 +99,7 @@ namespace Inventory.Api.Services
         public async Task<Order?> GetByIdAsync(Guid userId, Guid orderId)
         {
             var order = await _context.Orders
+                .AsNoTracking()
                 .Include(o => o.Items)
                 .FirstOrDefaultAsync(o => o.Id == orderId);
 

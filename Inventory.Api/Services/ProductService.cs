@@ -33,6 +33,7 @@ namespace Inventory.Api.Services
         public async Task<IEnumerable<Product>> GetAllAsync(Guid userId)
         {
             return await _context.Products
+                .AsNoTracking()
                 .Where(p => p.UserId == userId)
                 .ToListAsync();
         }
@@ -40,6 +41,7 @@ namespace Inventory.Api.Services
         public async Task<IEnumerable<Product>> GetProductsByUserAsync(Guid userId)
         {
             return await _context.Products
+                                 .AsNoTracking()
                                  .Where(p => p.UserId == userId)
                                  .ToListAsync();
         }
@@ -47,6 +49,7 @@ namespace Inventory.Api.Services
         public async Task<Product?> GetByIdAsync(Guid userId, Guid productId)
         {
             return await _context.Products
+                .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.Id == productId && p.UserId == userId);
         }
 

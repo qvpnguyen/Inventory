@@ -27,7 +27,22 @@ namespace Inventory.Api.Controllers
 
             var products = await _productService.GetProductsByUserAsync(userId);
 
-            return Ok(products.Select(ProductService.MapToResponse));
+            var response = products
+                .Select(ProductService.MapToResponse)
+                .ToList();
+
+            return Ok(response);
+        }
+
+        // GET api/products/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetProductById(Guid id)
+        {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            var product = await _productService.GetByIdAsync(userId, id);
+
+            return Ok(ProductService.MapToResponse(product));
         }
 
         // POST api/products

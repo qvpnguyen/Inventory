@@ -25,8 +25,14 @@ namespace Inventory.Api.Controllers
         public async Task<IActionResult> GetMyOrders()
         {
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
             var orders = await _orderService.GetAllAsync(userId);
-            return Ok(orders.Select(OrderService.MapToResponse));
+
+            var response = orders
+                .Select(OrderService.MapToResponse)
+                .ToList();  
+
+            return Ok(response);
         }
 
         // GET api/orders/my/{id}
