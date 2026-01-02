@@ -24,6 +24,8 @@ namespace Inventory.Api.Services
 
         public async Task<Order> CreateAsync(Guid userId, CreateOrderRequest request)
         {
+            _logger.LogInformation(
+                $"Starting order creation for user {userId} with {request.Items.Count} items");
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
@@ -40,6 +42,8 @@ namespace Inventory.Api.Services
 
                     if (product is null)
                     {
+                        _logger.LogWarning(
+                            $"Product with id {item.ProductId} not found");
                         throw new NotFoundException($"Product with id {item.ProductId} not found");
                     }
 
@@ -47,7 +51,7 @@ namespace Inventory.Api.Services
                     {
                         _logger.LogWarning(
                             $"Insufficient stock for product {product.Id}. Requested {item.Quantity}. Available {product.StockQuantity}");
-                        throw new BusinessRuleException($"Insufficient stock for product {product.Name}");
+                        throw new BusinessRuleException($"Insufficient stock for product {product.Id}. Requested {item.Quantity}. Available {product.StockQuantity}");
                     }
 
                     product.StockQuantity -= item.Quantity;
@@ -72,7 +76,7 @@ namespace Inventory.Api.Services
                 await _hubContext.Clients.All.SendAsync("OrderCreated", orderDto);
 
                 _logger.LogInformation(
-                    $"Order {order.Id} created for user {userId} with total {order.TotalAmount}");
+                    $"Order {order.Id} successfully created for user {userId} (Total: {order.TotalAmount}");
 
                 return order;
             } catch

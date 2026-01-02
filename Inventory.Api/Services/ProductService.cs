@@ -9,14 +9,18 @@ namespace Inventory.Api.Services
     public class ProductService : IProductService
     {
         private readonly AppDbContext _context;
+        private readonly ILogger<ProductService> _logger;
 
-        public ProductService(AppDbContext context)
+        public ProductService(AppDbContext context, ILogger<ProductService> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task<Product> CreateAsync(Guid userId, CreateProductRequest request)
         {
+            _logger.LogInformation(
+                $"Creating product '{request.Name}' for user {userId}");
             var product = new Product
             {
                 Name = request.Name,
@@ -27,6 +31,8 @@ namespace Inventory.Api.Services
 
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
+            _logger.LogInformation(
+                $"Product {product.Id} '{product.Name}' successfully created by user {userId}");
             return product;
         }
 
@@ -55,11 +61,15 @@ namespace Inventory.Api.Services
 
         public async Task UpdateAsync(Guid userId, Guid productId, UpdateProductRequest request)
         {
+            _logger.LogInformation(
+                $"Updating product {productId} for user {userId}");
             var product = await _context.Products
                 .FirstOrDefaultAsync(p => p.Id == productId && p.UserId == userId);
 
             if (product is null)
             {
+                _logger.LogWarning(
+                    $"Product with id {productId} not found");
                 throw new KeyNotFoundException("Product not found");
             }
 
@@ -67,6 +77,10 @@ namespace Inventory.Api.Services
             product.Price = request.Price;
             product.StockQuantity = request.StockQuantity;
             await _context.SaveChangesAsync();
+            _logger.LogInformation(
+                $"Product {product.Id} successfully updated by user {userId}");
+            _logger.LogDebug(
+                $"Updated product values: Name={product.Name}, Price={product.Price}, Stock={product.StockQuantity}");
         }
 
         public async Task DeleteAsync(Guid userId, Guid productId)
@@ -76,7 +90,9 @@ namespace Inventory.Api.Services
 
             if (product is null)
             {
-                throw new KeyNotFoundException("Product not found");
+                _logger.LogWarning(
+                    $"Product with id {productId} not found");
+                throw new KeyNotFoundException($"Product with id {productId} not found");
             }
 
             _context.Products.Remove(product);
