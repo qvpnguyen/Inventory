@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using Moq;
 using Xunit;
+using Castle.Core.Logging;
+using Microsoft.Extensions.Logging;
 
 namespace Inventory.Tests.Services
 {
@@ -33,7 +35,8 @@ namespace Inventory.Tests.Services
             using var context = DbContextFactory.CreateDbContext();
             var user = DbContextFactory.CreateTestUser(context);
             var product = DbContextFactory.CreateTestProduct(context, user, stock: 5);
-            var service = new OrderService(context, CreateMockHub());
+            var logger = new Mock<ILogger<OrderService>>().Object;
+            var service = new OrderService(context, CreateMockHub(), logger);
 
             var request = new CreateOrderRequest
             {
@@ -56,7 +59,8 @@ namespace Inventory.Tests.Services
         {
             // Arrange
             using var context = DbContextFactory.CreateDbContext();
-            var service = new OrderService(context, CreateMockHub());
+            var logger = new Mock<ILogger<OrderService>>().Object;
+            var service = new OrderService(context, CreateMockHub(), logger);
 
             var user = DbContextFactory.CreateTestUser(context);
             var request = new CreateOrderRequest
@@ -77,7 +81,8 @@ namespace Inventory.Tests.Services
         {
             // Arrange
             var context = DbContextFactory.CreateDbContext();
-            var service = new OrderService(context, CreateMockHub());
+            var logger = new Mock<ILogger<OrderService>>().Object;
+            var service = new OrderService(context, CreateMockHub(), logger);
 
             var user = DbContextFactory.CreateTestUser(context);
 
@@ -114,7 +119,8 @@ namespace Inventory.Tests.Services
         {
             // Arrange
             var context = DbContextFactory.CreateDbContext();
-            var service = new OrderService(context, CreateMockHub());
+            var logger = new Mock<ILogger<OrderService>>().Object;
+            var service = new OrderService(context, CreateMockHub(), logger);
 
             var user = DbContextFactory.CreateTestUser(context);
 
@@ -165,7 +171,8 @@ namespace Inventory.Tests.Services
         {
             // Arrange
             var context = DbContextFactory.CreateDbContext();
-            var service = new OrderService(context, CreateMockHub());
+            var logger = new Mock<ILogger<OrderService>>().Object;
+            var service = new OrderService(context, CreateMockHub(), logger);
 
             var user = DbContextFactory.CreateTestUser(context);
 
@@ -208,7 +215,8 @@ namespace Inventory.Tests.Services
         {
             // Arrange
             var context = DbContextFactory.CreateDbContext();
-            var service = new OrderService(context, CreateMockHub());
+            var logger = new Mock<ILogger<OrderService>>().Object;
+            var service = new OrderService(context, CreateMockHub(), logger);
 
             var owner = DbContextFactory.CreateTestUser(context);
 
@@ -262,7 +270,8 @@ namespace Inventory.Tests.Services
         {
             // Arrange
             var context = DbContextFactory.CreateDbContext();
-            var service = new OrderService(context, CreateMockHub());
+            var logger = new Mock<ILogger<OrderService>>().Object;
+            var service = new OrderService(context, CreateMockHub(), logger);
 
             var owner = DbContextFactory.CreateTestUser(context);
             var intruder = DbContextFactory.CreateTestUser(context);

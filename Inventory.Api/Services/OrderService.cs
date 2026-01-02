@@ -21,11 +21,6 @@ namespace Inventory.Api.Services
             _hubContext = hubContext;
             _logger = logger;
         }
-        public OrderService(AppDbContext context, IHubContext<OrderHub> hubContext)
-        {
-            _context = context;
-            _hubContext = hubContext;
-        }
 
         public async Task<Order> CreateAsync(Guid userId, CreateOrderRequest request)
         {

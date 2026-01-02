@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestPlatform.TestHost;
 using Moq;
 using System.Threading.Tasks;
@@ -31,7 +32,8 @@ namespace Inventory.Tests.Hubs
             clients.Setup(c => c.All).Returns(proxy.Object);
             hubContext.Setup(h => h.Clients).Returns(clients.Object);
 
-            var service = new OrderService(context, hubContext.Object);
+            var logger = new Mock<ILogger<OrderService>>().Object;
+            var service = new OrderService(context, hubContext.Object, logger);
 
             var user = new User
             {
