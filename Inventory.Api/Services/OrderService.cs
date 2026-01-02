@@ -76,7 +76,7 @@ namespace Inventory.Api.Services
                 await _hubContext.Clients.All.SendAsync("OrderCreated", orderDto);
 
                 _logger.LogInformation(
-                    $"Order {order.Id} successfully created for user {userId} (Total: {order.TotalAmount}");
+                    $"Order {order.Id} successfully created for user {userId} (Total: {order.TotalAmount})");
 
                 return order;
             } catch
@@ -104,11 +104,15 @@ namespace Inventory.Api.Services
 
             if (order == null)
             {
-                throw new NotFoundException("Order not found");
+                _logger.LogWarning(
+                    $"Order {orderId} not found");
+                throw new NotFoundException($"Order {orderId} not found");
             }
             if (order.UserId != userId)
             {
-                throw new ForbiddenException("Access denied");
+                _logger.LogWarning(
+                    $"Access denied for user {userId}");
+                throw new ForbiddenException($"Access denied for user {userId}");
             }
             return order;
         }

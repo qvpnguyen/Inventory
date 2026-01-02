@@ -1,5 +1,6 @@
 ﻿using Inventory.Api.Domain.Entities;
 using Inventory.Api.DTOs.Products;
+using Inventory.Api.Exceptions;
 using Inventory.Api.Persistence;
 using Inventory.Api.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -70,7 +71,7 @@ namespace Inventory.Api.Services
             {
                 _logger.LogWarning(
                     $"Product with id {productId} not found");
-                throw new KeyNotFoundException("Product not found");
+                throw new NotFoundException($"Product with id {productId} not found");
             }
 
             product.Name = request.Name;
@@ -92,7 +93,7 @@ namespace Inventory.Api.Services
             {
                 _logger.LogWarning(
                     $"Product with id {productId} not found");
-                throw new KeyNotFoundException($"Product with id {productId} not found");
+                throw new NotFoundException($"Product with id {productId} not found");
             }
 
             _context.Products.Remove(product);
