@@ -1,5 +1,6 @@
 ﻿using Inventory.Api.Domain.Entities;
 using Inventory.Api.Persistence;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
@@ -12,16 +13,18 @@ namespace Inventory.Tests.Helpers
         {
             var dbName = $"inventorytest_{Guid.NewGuid():N}";
             return $"Host=localhost;Port=5432;Database={dbName};Username=postgres;Password=postgres";
-        } 
+        }
         // For OrderServiceTests
-        public static AppDbContext CreateDbContext() 
+        public static AppDbContext CreateDbContext()
         {
+            var connection = new SqliteConnection("DataSource=:memory:");
+            connection.Open();
+
             var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseNpgsql(GetConnectionString())
+                .UseSqlite(connection)
                 .Options;
 
             var context = new AppDbContext(options);
-            context.Database.EnsureDeleted(); // reset
             context.Database.EnsureCreated();
             return context;
         }
