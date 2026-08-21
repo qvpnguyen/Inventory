@@ -1,16 +1,17 @@
-﻿using FluentAssertions;
+﻿using Castle.Core.Logging;
+using FluentAssertions;
 using Inventory.Api.Domain.Entities;
 using Inventory.Api.DTOs.Orders;
+using Inventory.Api.Exceptions;
 using Inventory.Api.Hubs;
 using Inventory.Api.Services;
-using Inventory.Api.Exceptions;
 using Inventory.Tests.Helpers;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration.UserSecrets;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using Castle.Core.Logging;
-using Microsoft.Extensions.Logging;
 
 namespace Inventory.Tests.Services
 {
@@ -118,52 +119,69 @@ namespace Inventory.Tests.Services
         public async Task CreateOrder_WhenOneItemFails_ShouldRollbackAll()
         {
             // Arrange
-            var context = DbContextFactory.CreateDbContext();
-            var logger = new Mock<ILogger<OrderService>>().Object;
-            var service = new OrderService(context, CreateMockHub(), logger);
+            using var db = new SqliteTestDatabase();
 
-            var user = DbContextFactory.CreateTestUser(context);
+            Guid userId, product1Id, product2Id;
 
-            var product1 = new Product
+            using (var seed = db.CreateContext())
             {
-                Id = Guid.NewGuid(),
-                Name = "Product 1",
-                StockQuantity = 5,
-                Price = 20m,
-                UserId = user.Id
-            };
-            var product2 = new Product
-            {
-                Id = Guid.NewGuid(),
-                Name = "Product 2",
-                StockQuantity = 0,
-                Price = 15m,
-                UserId = user.Id
-            };
-
-            context.Products.AddRange(product1, product2);
-            await context.SaveChangesAsync();
-
-            var request = new CreateOrderRequest
-            {
-                Items = new List<CreateOrderItemRequest>
+                var user = new User 
                 {
-                    new() { ProductId = product1.Id, Quantity = 2 },
-                    new() { ProductId = product2.Id, Quantity = 1 }
-                }
-            };
+                    Id = Guid.NewGuid(),
+                    Email = $"test{Guid.NewGuid()}@example.com",
+                    PasswordHash = "hashed"
+                };
+                seed.Users.Add(user);
+
+                var product1 = new Product
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Product 1",
+                    StockQuantity = 5,
+                    Price = 20m,
+                    UserId = user.Id
+                };
+                var product2 = new Product
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "Product 2",
+                    StockQuantity = 0,
+                    Price = 15m,
+                    UserId = user.Id
+                };
+                seed.Products.AddRange(product1, product2);
+                await seed.SaveChangesAsync();
+
+                userId = user.Id;
+                product1Id = product1.Id;
+                product2Id = product2.Id;
+            }
 
             // Act
-            await Assert.ThrowsAsync<BusinessRuleException>(() =>
-                service.CreateAsync(user.Id, request));
+            using (var actContext = db.CreateContext())
+            {
+                var service = new OrderService(actContext, CreateMockHub(),
+                                               new Mock<ILogger<OrderService>>().Object);
 
-            // Refresh entities of current context
-            await context.Entry(product1).ReloadAsync();
-            await context.Entry(product2).ReloadAsync();
+                var request = new CreateOrderRequest
+                {
+                    Items = new List<CreateOrderItemRequest>
+            {
+                new() { ProductId = product1Id, Quantity = 2 },
+                new() { ProductId = product2Id, Quantity = 1 }
+            }
+                };
 
-            // Assert : Product1 stock has not been changed
-            (await context.Products.FindAsync(product1.Id))!.StockQuantity.Should().Be(5);
-            (await context.Products.FindAsync(product2.Id))!.StockQuantity.Should().Be(0);
+                await Assert.ThrowsAsync<BusinessRuleException>(() =>
+                    service.CreateAsync(userId, request));
+            }
+
+            // Assert — contexte neuf, aucune influence du change tracker
+            using (var verify = db.CreateContext())
+            {
+                (await verify.Products.FindAsync(product1Id))!.StockQuantity.Should().Be(5);
+                (await verify.Orders.CountAsync()).Should().Be(0);
+            }
         }
 
         [Fact]
