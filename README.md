@@ -1,5 +1,7 @@
 # Inventory Management API
 
+![CI](https://github.com/qvpnguyen/Inventory/actions/workflows/ci.yml/badge.svg)
+
 A clean, test-driven ASP.NET Core Web API for managing products and orders.
 This project focuses on backend correctness, clean architecture, and real-world patterns
 rather than client-side implementation.
