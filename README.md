@@ -2,6 +2,8 @@
 
 ![CI](https://github.com/qvpnguyen/Inventory/actions/workflows/ci.yml/badge.svg)
 
+**Live demo:** [Swagger UI](https://inventory-api-qvpnguyen-cecpf2fdg5e2fbe7.canadacentral-01.azurewebsites.net/swagger)
+
 A clean, test-driven ASP.NET Core Web API for managing products and orders.
 This project focuses on backend correctness, clean architecture, and real-world patterns
 rather than client-side implementation.
@@ -17,7 +19,8 @@ rather than client-side implementation.
 - Global exception handling middleware
 - DTO-based API contracts
 - Ownership and authorization checks
-- Unit testing with EF Core InMemory
+- JWT authentication
+- Unit testing with in-memory SQLite
 
 ---
 
@@ -34,9 +37,7 @@ The project follows a layered / clean architecture approach:
 
 Core principles applied:
 - Separation of Concerns
-- SOLID principles
 - Dependency Injection
-- Persistence Ignorance
 
 ---
 
@@ -100,12 +101,13 @@ Inventory.Api
 ```
 Inventory.Tests
 ├── Helpers
-│ └── DbContextFactory.cs
+│ ├── DbContextFactory.cs
+│ └── SqliteTestDatabase.cs
 │
 ├── Hubs
 │ └── OrderHubTests.cs
 │
-└── Services.cs
+└── Services
   └── OrderServiceTests.cs
 ```
 
@@ -175,11 +177,25 @@ SignalR is used to broadcast order-related events.
 ## Testing Strategy
 
 - xUnit for unit testing
-- EF Core InMemory for isolation
-- Transaction rollback verification
-- SignalR mocking
+- In-memory SQLite for tests involving persistence and transactions
+- EF Core InMemory for tests that don't touch the database (SignalR hub)
+- SignalR mocked via IHubContext
 
-EF Core InMemory is used to ensure fast, deterministic tests without external dependencies.
+SQLite is used rather than the EF Core InMemory provider because InMemory silently
+ignores transactions and does not enforce schema constraints — rollback tests would
+pass without exercising any rollback. In-memory SQLite behaves like a real relational
+database while keeping tests fast and free of external dependencies.
+
+---
+
+## Deployment
+
+The API is deployed to Azure App Service with a managed PostgreSQL database.
+Build, tests, and deployment run automatically on every push to `main` via
+GitHub Actions.
+
+Note: the free tier sleeps after inactivity — the first request may take up to
+a minute to respond.
 
 ---
 
@@ -206,8 +222,29 @@ Each exception maps to a proper HTTP status code.
 4. Transactions and rollback
 5. SignalR integration
 6. Validation and exception handling
-7. Authorization and ownership checks
-8. Documentation and cleanup
+7. JWT authentication
+8. Authorization and ownership checks
+9. Documentation and cleanup
+10. CI/CD pipeline and Azure deployment
+
+---
+
+## Configuration
+
+Secrets are not versioned. To run locally, create `Inventory.Api/appsettings.Development.json`:
+
+​```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Database=inventory;Username=...;Password=..."
+  },
+  "JwtSettings": {
+    "SecretKey": "a-key-of-at-least-32-bytes"
+  }
+}
+​```
+
+Then apply migrations with `dotnet ef database update`.
 
 ---
 
